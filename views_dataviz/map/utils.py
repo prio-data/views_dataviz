@@ -1,3 +1,7 @@
+"""
+Mapping utilities
+"""
+
 from typing import Any, Dict, List, Tuple, Union
 import os
 import numpy as np
@@ -8,17 +12,22 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable  # type: ignore
 
 
 def odds_to_prob(odds: Any) -> Any:
-    """ Cast odds ratio to probability """
+    """Cast odds ratio to probability."""
     return odds / (odds + 1)
 
 
 def logodds_to_prob(logodds: Any) -> Any:
-    """ Cast logodds to probability """
+    """Cast logodds to probability."""
     return odds_to_prob(np.exp(logodds))
 
 
+def prob_to_logodds(p):
+    """Cast probability to log-odds."""
+    return np.log(prob_to_odds(p))
+
+
 def prob_to_odds(p, clip=True):
-    """ Cast probability into odds """
+    """Cast probability into odds."""
 
     if isinstance(p, list):
         p = np.array(p)
@@ -30,18 +39,13 @@ def prob_to_odds(p, clip=True):
         lower = 0 + offset
         p = np.clip(p, lower, upper)
 
-    # Check for probs greq 1 because odds of 1 is inf which might break things
+    # Check for probs greq 1 because odds of 1 is inf which might break things.
     if np.any(p >= 1):
         msg = "probs >= 1 passed to get_odds, expect infs"
         warnings.warn(msg)
 
     odds = p / (1 - p)
     return odds
-
-
-def prob_to_logodds(p):
-    """ Cast probability to log-odds """
-    return np.log(prob_to_odds(p))
 
 
 def make_ticks(var_scale: str) -> Dict[str, Any]:
