@@ -9,7 +9,6 @@ from views_dataviz.map import Mapper, utils
 
 
 BBOX_AFRICA = [-18.5, 52.0, -35.5, 38.0]
-
 CMAPS = {
     "prob": plt.get_cmap("rainbow"),
     "logodds": color.shift_colormap(plt.get_cmap("rainbow")),
@@ -60,7 +59,7 @@ class ViewsAfrica(Mapper):
         self.label = label
         if scale not in (None, "prob", "logodds", "delta"):
             raise ValueError(
-                'Invalid scale. Options: "prob", "logodds", "delta", or None.'
+                "Invalid scale. Options: 'prob', 'logodds', 'delta', or None."
             )
         self.scale = scale
         if self.scale is not None:

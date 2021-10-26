@@ -79,7 +79,7 @@ class Mapper:
                 self.vmax = gdf[kwargs["column"]].max()
             else:
                 self.vmax = kwargs["vmax"]
-            Mapper.add_colorbar(self, self.cmap, self.vmin, self.vmax)
+            Mapper.add_colorbar(self, colormap, self.vmin, self.vmax)
         self.ax = gdf.plot(ax=self.ax, cmap=colormap, **kwargs)
         return self
 
