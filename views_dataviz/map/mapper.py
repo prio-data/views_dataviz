@@ -173,6 +173,7 @@ class Mapper:
         corner_loc1: Literal[1, 2, 3, 4] = 2,
         corner_loc2: Literal[1, 2, 3, 4] = 3,
         xy_inset: float = (1.02, 0.35),
+        edgecolor: str = "lightgrey",
     ):
         """Add a zoom inset to the map figure.
 
@@ -190,6 +191,7 @@ class Mapper:
         corner_loc2: Corner location of the second connecting line: upper right
             (1), upper left (2), lower left (3), or lower right (4).
         xy_inset: Location of x and y of the inset as a fraction of the axis.
+        edgecolor: String name for the color of the connecting lines.
         """
         axins = zoomed_inset_axes(
             self.ax,
@@ -212,7 +214,7 @@ class Mapper:
             labelbottom=False,
         )
         mark_inset(
-            self.ax, axins, loc1=corner_loc1, loc2=corner_loc2, ec="0.6"
+            self.ax, axins, loc1=corner_loc1, loc2=corner_loc2, ec=edgecolor
         )
         self.insets[name] = axins
         return self
