@@ -2,15 +2,20 @@
 
 from typing import List, Tuple, Optional, Any
 import pandas as pd
+import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import matplotlib.patches as mpatches
+import matplotlib.colors as mpcol
 
 
 def plot_heatmap(
-    s: pd.Series,
-    x: Optional[pd.Series] = None,
-    y: Optional[pd.Series] = None,
+    df: pd.DataFrame,
+    s: str,
+    x: Optional[str] = None,
+    y: Optional[str] = None,
+    colors: Optional[List[str]] = None,
     title: Optional[str] = None,
     cmap: Any = "viridis",
     ymin: Optional[float] = None,
@@ -25,13 +30,16 @@ def plot_heatmap(
     categorical: bool = False,
     path: Optional[str] = None,
 ) -> None:
-    """Plot a heatmap from a (MultiIndexed) Series.
+    """Plot a heatmap from a (MultiIndexed) Pandas dataframe.
 
     Args:
-        s: pd.Series of data to plot.
-        x: Optional pd.Series of time labels. Note that if it's non-integer,
-            this needs to be datetime for it to sort correctly.
-        y: Optional pd.Series of group labels.
+        df: pd.DataFrame containing the series to plot.
+        s: Column name for the series to plot.
+        x: Optional column name for the x-labels (usually time). Note that if
+            it is non-integer, this needs to be datetime for it to sort
+            correctly.
+        y: Optional column name for the group labels.
+        colors: Optional list of colors to apply if the s are categorical.
         title: Title to add to figure.
         cmap: Matplotlib colormap to use.
         ymin: Minimum to map the data to.
@@ -42,43 +50,38 @@ def plot_heatmap(
         textsize: Base size of text. Title/ticks are hardcoded relatives.
         figsize: Tuple (width, height) to pass as figure size.
         legend: Bool determining whether to draw a legend.
-        boundaries: Optional boundaries to apply to colorscale. 
+        boundaries: Optional boundaries to apply to colorscale.
         categorical: Bool to indicate the data is categorical.
         path: Optional. Write to path if set.
     """
     # Take the index values as default axes of the matrix.
     try:
-        timevar = x.name if x is not None else s.index.names[0]
-        groupvar = y.name if y is not None else s.index.names[1]
+        timevar = x if x is not None else df.index.names[0]
+        groupvar = y if y is not None else df.index.names[1]
     except IndexError as e:
         msg = "Series is not xy MultiIndexed. Try providing x and y."
         raise Exception(msg) from e
 
-    # Concatenate again.
-    df = pd.DataFrame(s).reset_index()
-    if x is not None and y is None:
-        df = pd.concat([s, x], axis=1).reset_index()
-    if x is None and y is not None:
-        df = pd.concat([s, y], axis=1).reset_index()
-    if x is not None and y is not None:
-        df = pd.concat([s, x, y], axis=1).reset_index()
-
     # Check for series dtype. Factorize if not numeric.
-    if not pd.api.types.is_numeric_dtype(df[s.name]):
+    if not pd.api.types.is_numeric_dtype(df[s]):
         warnings.warn("Series does not look numeric. Factorizing.")
-        df[s.name] = pd.factorize(df[s.name], sort=True)[0]
+        df[s] = pd.factorize(df[s], sort=True)[0]
 
     # Set vmin, vmax.
-    vmin = df[s.name].min() if not ymin else ymin
-    vmax = df[s.name].max() if not ymax else ymax
+    vmin = df[s].min() if not ymin else ymin
+    vmax = df[s].max() if not ymax else ymax
 
     # Pivot df.
-    df_matrix = df.pivot(index=groupvar, columns=timevar, values=s.name)
+    df_matrix = df.reset_index().pivot(
+        index=groupvar, columns=timevar, values=s
+    )
 
     # Set size.
     plt.figure(figsize=figsize)
 
     # Plot.
+    if colors is not None:
+        cmap = mpcol.LinearSegmentedColormap.from_list("categorical", colors)
     ax = sns.heatmap(
         df_matrix,
         cmap=cmap,
@@ -104,11 +107,18 @@ def plot_heatmap(
             cax.axis("off")
             # Reconstruct color map categorically.
             # Ticks are the unique values in s or specifically provided ones.
-            ticks = s.unique() if tick_values is None else tick_values
-            colorf = plt.get_cmap(cmap)
+            ticks = df[s].unique() if tick_values is None else tick_values
+            if colors is None:
+                colorf = plt.get_cmap(cmap)
+            else:
+                colorf = mpcol.LinearSegmentedColormap.from_list(
+                    "categorical", colors
+                )
             colors = colorf(np.linspace(0, 1, len(ticks)))
             # Alter labels in same order if requested.
-            labels = sorted(s.unique()) if tick_labels is None else tick_labels
+            labels = (
+                sorted(df[s].unique()) if tick_labels is None else tick_labels
+            )
             # Make patches according to categorical colors.
             patches = [
                 mpatches.Patch(facecolor=c, edgecolor=c) for c in colors
@@ -148,5 +158,5 @@ def plot_heatmap(
 
     # Finish up and save.
     if path is not None:
-        plt.savefig(path, dpi=250, bbox_inches="tight")
+        plt.savefig(path, dpi=200, bbox_inches="tight")
         plt.close()
