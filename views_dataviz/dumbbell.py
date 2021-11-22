@@ -17,6 +17,7 @@ def plot_dumbbell(
     markercolors: Tuple[int, int] = ("black", "red"),
     linecolor: str = "grey",
     lims: Optional[Tuple[int, int]] = None,
+    pad: float = 0.2,
     figsize: Tuple[float, float] = (10.0, 12.0),
     legend_kwds: Optional[Dict] = None,
     ascending: bool = False,
@@ -37,6 +38,8 @@ def plot_dumbbell(
         linecolor: Color for the lines connecting the scatter markers.
         lims: Optional tuple of vmin, vmax of x-axis if vertical, y-axis if
             horizontal.
+        pad: Float for padding between outer frame and the first and last
+            dumbbell.
         figsize: Tuple of (width, height) to pass as figsize.
         legend_kwds: Optional dictionary containing keyword arguments for
             additional customization of the legend.
@@ -129,7 +132,7 @@ def plot_dumbbell(
     ax.spines["right"].set_visible(False)
     ax.spines["bottom"].set_visible(False)
     ax.spines["left"].set_visible(False)
-    ax.margins(0.2)
+    ax.margins(pad)
 
     if lims is not None:
         vmin, vmax = lims
