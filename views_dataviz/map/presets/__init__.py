@@ -1,3 +1,1 @@
-__all__ = ["views"]
-
-from .views import ViewsAfrica
+from .views import ViewsMap
