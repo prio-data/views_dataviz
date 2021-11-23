@@ -20,7 +20,7 @@ def plot_radar(
     label_size: int = 12,
     legend_size: int = 10,
     title: Optional[str] = None,
-    titlesize: int = 14,
+    titlesize: int = 16,
     titlepad: int = 20,
     cmap: str = "tab10",
     colors: List[str] = None,
