@@ -1,7 +1,7 @@
 """Radar plots."""
 
 from typing import Optional, Union, Tuple, List
-from math import pi
+import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -12,13 +12,16 @@ def plot_radar(
     entries: List[str],
     minmax: Optional[Tuple[float, float]] = None,
     legend_labels: List[str] = None,
-    legend_y: float = 1,
+    legend_anchor: Tuple[float, float] = (1.1, 1),
     figsize: Tuple[int, int] = (6, 6),
     tick_locations: Optional[List[float]] = None,
     tick_labels: Optional[List[str]] = None,
-    tick_size: int = 12,
+    tick_size: int = 10,
+    label_size: int = 12,
+    legend_size: int = 10,
     title: Optional[str] = None,
-    titlesize: int = 14,
+    title_size: int = 16,
+    title_pad: int = 20,
     cmap: str = "tab10",
     colors: List[str] = None,
     fill: bool = False,
@@ -36,13 +39,16 @@ def plot_radar(
         entries: List of column names to plot on the radar.
         minmax: Tuple that sets min and max of values plotted.
         legend_labels: Optional list of legend labels.
-        legend_y: Legend location in axes coords.
+        legend_anchor: Legend location (x, y) in axes coords.
         figsize: Tuple of width and height in inches.
         tick_locations: Optional locations of ticks plotted on radar.
         tick_labels: Optional labels of ticks plotted on radar.
         tick_size: Textsize of ticks.
+        label_size: Textsize of labels.
+        legend_size: Textsize of legend labels.
         title: Optional title to add to figure.
-        titlesize: Textsize of title.
+        title_size: Textsize of title.
+        title_pad: Pad pushing title up from figure.
         cmap: String referring to a matplotlib colormap. Colors are assigned 
             to each enumerated entry: cmap(i).
         colors: Optional list of colors. Overrides cmap. Example:
@@ -60,21 +66,34 @@ def plot_radar(
     nodes = len(df[categories])
 
     # Determine the angle of each axis in the plot.
-    angles = [n / float(nodes) * 2 * pi for n in range(nodes)]
+    angles = [n / float(nodes) * 2 * np.pi for n in range(nodes)]
     angles += angles[:1]
 
     # Draw one tick per var.
-    plt.xticks(angles[:-1], df[categories], size=tick_size)
+    plt.xticks(angles[:-1], df[categories], size=label_size)
 
     # Draw ylabels.
     ax.set_rlabel_position(0)
-    ax.set_theta_offset(pi / 2)
+    ax.set_theta_offset(np.pi / 2)
     ax.set_theta_direction(-1)
+
+    # Go through labels and adjust alignment based on angle.
+    for label, angle in zip(ax.get_xticklabels(), angles):
+      if angle in (0, np.pi):
+        label.set_horizontalalignment('center')
+      elif 0 < angle < np.pi:
+        label.set_horizontalalignment('left')
+      else:
+        label.set_horizontalalignment('right')
 
     # Adjust yticks and ylims.
     plt.yticks(
-        ticks=tick_locations, labels=tick_labels, color="grey", size=tick_size
+        ticks=tick_locations, 
+        labels=tick_labels, 
+        color="black", 
+        size=tick_size,
     )
+    ax.set_rlabel_position(180 / nodes)
     if minmax is not None:
         plt.ylim(minmax[0], minmax[1])
 
@@ -118,6 +137,7 @@ def plot_radar(
             alpha=style[col]["alpha"],
             marker=style[col]["marker"],
             label=col,
+            zorder=-1,
         )
         if fill:
             ax.fill(
@@ -126,15 +146,20 @@ def plot_radar(
 
     if legend_labels is not None:  # Override col-as-label default.
         ax.legend(
-            legend_labels, bbox_to_anchor=(1.08, legend_y), frameon=False
+            legend_labels, 
+            bbox_to_anchor=legend_anchor, 
+            frameon=False,
+            prop={"size": legend_size},
         )
     else:
-        ax.legend(bbox_to_anchor=(1.08, legend_y), frameon=False)
+        ax.legend(
+            bbox_to_anchor=legend_anchor, 
+            frameon=False, 
+            prop={"size": legend_size},
+        )
 
     if title:
-        ax.set_title(title, fontdict={"fontsize": titlesize})
-
-    ax.spines["polar"].set_visible(False)
+        ax.set_title(title, fontdict={"fontsize": title_size}, pad=title_pad)
 
     if path is not None:
         plt.savefig(path, dpi=200, bbox_inches="tight")
