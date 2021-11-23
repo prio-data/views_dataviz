@@ -20,8 +20,8 @@ def plot_radar(
     label_size: int = 12,
     legend_size: int = 10,
     title: Optional[str] = None,
-    titlesize: int = 16,
-    titlepad: int = 20,
+    title_size: int = 16,
+    title_pad: int = 20,
     cmap: str = "tab10",
     colors: List[str] = None,
     fill: bool = False,
@@ -47,8 +47,8 @@ def plot_radar(
         label_size: Textsize of labels.
         legend_size: Textsize of legend labels.
         title: Optional title to add to figure.
-        titlesize: Textsize of title.
-        titlepad: Pad pushing title up from figure.
+        title_size: Textsize of title.
+        title_pad: Pad pushing title up from figure.
         cmap: String referring to a matplotlib colormap. Colors are assigned 
             to each enumerated entry: cmap(i).
         colors: Optional list of colors. Overrides cmap. Example:
@@ -159,7 +159,7 @@ def plot_radar(
         )
 
     if title:
-        ax.set_title(title, fontdict={"fontsize": titlesize}, pad=titlepad)
+        ax.set_title(title, fontdict={"fontsize": title_size}, pad=title_pad)
 
     if path is not None:
         plt.savefig(path, dpi=200, bbox_inches="tight")
