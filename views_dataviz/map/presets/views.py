@@ -95,7 +95,14 @@ class ViewsMap(Mapper):
         )
         self.n_textbox = 0
 
-    def add_layer(self, gdf, cmap=None, inform_colorbar=False, **kwargs):
+    def add_layer(
+        self,
+        gdf,
+        cmap=None,
+        inform_colorbar=False,
+        suppress_textbox=False,
+        **kwargs,
+    ):
         """Add a geopandas plot to a new layer.
 
         Overrides method in parent, adding the default views textbox
@@ -108,6 +115,8 @@ class ViewsMap(Mapper):
             (e.g. "viridis").
         inform_colorbar: Set or overwrite colorbar with the current layer.
             Not applicable when `color` is supplied in the kwargs.
+        suppress_textbox: Bool indicating whether to suppress the drawing of
+            a views-textbox.
         **kwargs: Geopandas `.plot` keyword arguments.
         """
         if "color" in kwargs:
@@ -128,7 +137,7 @@ class ViewsMap(Mapper):
                     self.vmax = kwargs["vmax"]
                 Mapper.add_colorbar(self, colormap, self.vmin, self.vmax)
         self.ax = gdf.plot(ax=self.ax, cmap=colormap, **kwargs)
-        if self.n_textbox == 0:
+        if self.n_textbox == 0 and not suppress_textbox:
             Mapper.add_views_textbox(self, text=self.label, textsize=16)
             self.n_textbox += 1
         return self
