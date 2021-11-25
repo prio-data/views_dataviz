@@ -64,22 +64,29 @@ class Mapper:
         Parameters
         ----------
         gdf: Geopandas GeoDataFrame to plot.
+        cmap: Optional matplotlib colormap object or string reference
+            (e.g. "viridis").
+        inform_colorbar: Set or overwrite colorbar with the current layer.
+            Not applicable when `color` is supplied in the kwargs.
         **kwargs: Geopandas `.plot` keyword arguments.
         """
-        colormap = self.cmap if cmap is None else cmap
-        # If inform_colorbar, replace cax if exists and set with vmin, vmax.
-        if inform_colorbar and "column" in kwargs:
-            if hasattr(self, "cax"):
-                self.cax.remove()
-            if "vmin" not in kwargs:
-                self.vmin = gdf[kwargs["column"]].min()
-            else:
-                self.vmin = kwargs["vmin"]
-            if "vmax" not in kwargs:
-                self.vmax = gdf[kwargs["column"]].max()
-            else:
-                self.vmax = kwargs["vmax"]
-            Mapper.add_colorbar(self, colormap, self.vmin, self.vmax)
+        if "color" in kwargs:
+            colormap = None
+        else:
+            colormap = self.cmap if cmap is None else cmap
+            # If inform_colorbar, replace cax if exists and set with vmin vmax.
+            if inform_colorbar and "column" in kwargs:
+                if hasattr(self, "cax"):
+                    self.cax.remove()
+                if "vmin" not in kwargs:
+                    self.vmin = gdf[kwargs["column"]].min()
+                else:
+                    self.vmin = kwargs["vmin"]
+                if "vmax" not in kwargs:
+                    self.vmax = gdf[kwargs["column"]].max()
+                else:
+                    self.vmax = kwargs["vmax"]
+                Mapper.add_colorbar(self, colormap, self.vmin, self.vmax)
         self.ax = gdf.plot(ax=self.ax, cmap=colormap, **kwargs)
         return self
 
