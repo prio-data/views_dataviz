@@ -23,6 +23,8 @@ class Mapper:
     bbox: List for the bbox per [xmin, xmax, ymin, ymax].
     frame_on: Bool for whether to draw a frame around the map.
     title: Optional default title at matplotlib's default size.
+    figure: Optional tuple of (fig, size) to use if you want to plot into an
+        already existing fig and ax, rather than making a new one.
     """
 
     def __init__(
@@ -33,12 +35,16 @@ class Mapper:
         cmap=None,
         frame_on=True,
         title="",  # Default title without customization. (?)
+        figure=None,
     ):
         self.width = width
         self.height = height
         self.bbox = bbox  # xmin, xmax, ymin, ymax
         self.cmap = cmap
-        self.fig, self.ax = plt.subplots(figsize=(self.width, self.height))
+        if figure is None:
+            self.fig, self.ax = plt.subplots(figsize=(self.width, self.height))
+        else:
+            self.fig, self.ax = figure
         self.texts = []
         self.ax.set_title(title)
 

@@ -40,6 +40,8 @@ class ViewsMap(Mapper):
     vmax: Maximum value of scale.
     tickparams: Dictionary of custom tick parameters, by key-value pairs. For
         example: {0.05: "5%", 0.1: "10%"}.
+    figure: Optional tuple of (fig, size) to use if you want to plot into an
+        already existing fig and ax, rather than making a new one.
     """
 
     def __init__(
@@ -55,6 +57,7 @@ class ViewsMap(Mapper):
         vmin=None,
         vmax=None,
         tickparams=None,
+        figure=None,
     ):
         if isinstance(bbox, str):
             bbox_string = bbox.lower()
@@ -66,7 +69,9 @@ class ViewsMap(Mapper):
                 bbox = BBOX_AFRICA
             if bbox_string == "africa_middle_east":
                 bbox = BBOX_AME
-        super().__init__(width, height, bbox, cmap, frame_on, title)
+        super().__init__(
+            width, height, bbox, cmap, frame_on, title, figure=figure
+        )
         self.label = label
         if scale not in (None, "prob", "logodds", "delta"):
             raise ValueError(
