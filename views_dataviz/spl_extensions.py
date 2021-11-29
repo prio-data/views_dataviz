@@ -100,3 +100,4 @@ class ModelCriticismMap(spl.ModelCriticismPlot):
                 color=row["fgcolor"],
             )
             self.map_ax.add_artist(con)
+        return self
