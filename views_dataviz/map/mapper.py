@@ -2,11 +2,8 @@
 Maps using matplotlib and geopandas.
 """
 
-from typing import Optional, Literal, Union, List, Dict
-from matplotlib import colors
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
 import contextily as ctx
 
 from views_dataviz import color
@@ -24,28 +21,32 @@ class Mapper:
     width: Integer value for width in inches.
     height: Integer value for height in inches.
     bbox: List for the bbox per [xmin, xmax, ymin, ymax].
-    cmap: String for a matplotlib colormap, or a matplotlib colormap object.
     frame_on: Bool for whether to draw a frame around the map.
     title: Optional default title at matplotlib's default size.
+    figure: Optional tuple of (fig, size) to use if you want to plot into an
+        already existing fig and ax, rather than making a new one.
     """
 
     def __init__(
         self,
-        width: int,
-        height: int,
-        bbox: Optional[List[float]] = None,
-        cmap: Optional[Union[str, colors.Colormap]] = None,
-        frame_on: bool = True,
-        title: str = "",  # Default title without customization. (?)
+        width,
+        height,
+        bbox=None,
+        cmap=None,
+        frame_on=True,
+        title="",  # Default title without customization. (?)
+        figure=None,
     ):
         self.width = width
         self.height = height
         self.bbox = bbox  # xmin, xmax, ymin, ymax
         self.cmap = cmap
-        self.fig, self.ax = plt.subplots(figsize=(self.width, self.height))
+        if figure is None:
+            self.fig, self.ax = plt.subplots(figsize=(self.width, self.height))
+        else:
+            self.fig, self.ax = figure
         self.texts = []
         self.ax.set_title(title)
-        self.insets = {}
 
         if frame_on:  # Remove axis ticks only.
             self.ax.tick_params(
@@ -63,42 +64,36 @@ class Mapper:
             self.ax.set_xlim((self.bbox[0], self.bbox[1]))
             self.ax.set_ylim((self.bbox[2], self.bbox[3]))
 
-    def add_layer(
-        self,
-        gdf,
-        cmap: Optional[Union[str, colors.Colormap]] = None,
-        inform_colorbar: bool = False,
-        insets: Optional[List[str]] = None,
-        **kwargs
-    ):
+    def add_layer(self, gdf, cmap=None, inform_colorbar=False, **kwargs):
         """Add a geopandas plot to a new layer.
 
         Parameters
         ----------
         gdf: Geopandas GeoDataFrame to plot.
-        inform_colorbar: Create or replace the colorbar with the layer data
-            if True.
-        insets: Inset axes to draw layer into.
+        cmap: Optional matplotlib colormap object or string reference
+            (e.g. "viridis").
+        inform_colorbar: Set or overwrite colorbar with the current layer.
+            Not applicable when `color` is supplied in the kwargs.
         **kwargs: Geopandas `.plot` keyword arguments.
         """
-        colormap = self.cmap if cmap is None else cmap
-        # If inform_colorbar, replace cax if exists and set with vmin, vmax.
-        if inform_colorbar and "column" in kwargs:
-            if hasattr(self, "cax"):
-                self.cax.remove()
-            if "vmin" not in kwargs:
-                self.vmin = gdf[kwargs["column"]].min()
-            else:
-                self.vmin = kwargs["vmin"]
-            if "vmax" not in kwargs:
-                self.vmax = gdf[kwargs["column"]].max()
-            else:
-                self.vmax = kwargs["vmax"]
-            Mapper.add_colorbar(self, colormap, self.vmin, self.vmax)
+        if "color" in kwargs:
+            colormap = None
+        else:
+            colormap = self.cmap if cmap is None else cmap
+            # If inform_colorbar, replace cax if exists and set with vmin vmax.
+            if inform_colorbar and "column" in kwargs:
+                if hasattr(self, "cax"):
+                    self.cax.remove()
+                if "vmin" not in kwargs:
+                    self.vmin = gdf[kwargs["column"]].min()
+                else:
+                    self.vmin = kwargs["vmin"]
+                if "vmax" not in kwargs:
+                    self.vmax = gdf[kwargs["column"]].max()
+                else:
+                    self.vmax = kwargs["vmax"]
+                Mapper.add_colorbar(self, colormap, self.vmin, self.vmax)
         self.ax = gdf.plot(ax=self.ax, cmap=colormap, **kwargs)
-        if insets is not None:
-            for inset in insets:
-                gdf.plot(ax=self.insets[inset], cmap=colormap, **kwargs)
         return self
 
     def add_colorbar(
@@ -150,7 +145,7 @@ class Mapper:
             self.cbar.set_ticklabels(list(tickparams.values()))
         return self
 
-    def replace_legend_labels(self, labels: Dict[str, str]):
+    def replace_legend_labels(self, labels):
         """Replace labels of standard mpl legend by key-value pair.
 
         Parameters
@@ -164,63 +159,8 @@ class Mapper:
                 txt.set_text(labels[txt.get_text()])
         return self
 
-    def add_zoom_inset(
-        self,
-        name: str,
-        bbox: List[float],
-        zoom: int = 4,
-        loc: Literal[1, 2, 3, 4] = 3,
-        corner_loc1: Literal[1, 2, 3, 4] = 2,
-        corner_loc2: Literal[1, 2, 3, 4] = 3,
-        xy_inset: float = (1.02, 0.35),
-        edgecolor: str = "lightgrey",
-    ):
-        """Add a zoom inset to the map figure.
-
-        Parameters
-        ----------
-        name: Identifier to give to the particular inset.
-        bbox: Bounding box to zoom in on per [xmin, xmax, ymin, ymax].
-        zoom: Scaling factor of the data axes. zoom > 1 will enlargen the
-            coordinates (i.e., "zoomed in"), while zoom < 1 will shrink the
-            coordinates (i.e., "zoomed out").
-        loc: One of four: upper right (1), upper left (2), lower left (3), or
-            lower right (4)
-        corner_loc1: Corner location of the first connecting line: upper right
-            (1), upper left (2), lower left (3), or lower right (4).
-        corner_loc2: Corner location of the second connecting line: upper right
-            (1), upper left (2), lower left (3), or lower right (4).
-        xy_inset: Location of x and y of the inset as a fraction of the axis.
-        edgecolor: String name for the color of the connecting lines.
-        """
-        axins = zoomed_inset_axes(
-            self.ax,
-            zoom,
-            bbox_to_anchor=(
-                xy_inset[0],
-                xy_inset[1],
-            ),
-            bbox_transform=self.ax.transAxes,
-            loc=loc,
-        )
-        axins.set_xlim(bbox[0], bbox[1])
-        axins.set_ylim(bbox[2], bbox[3])
-        axins.tick_params(
-            top=False,
-            bottom=False,
-            left=False,
-            right=False,
-            labelleft=False,
-            labelbottom=False,
-        )
-        mark_inset(
-            self.ax, axins, loc1=corner_loc1, loc2=corner_loc2, ec=edgecolor
-        )
-        self.insets[name] = axins
-        return self
-
     def add_basemap(
-        self, crs: int = 4326, source=ctx.providers.CartoDB.Voyager, **kwargs
+        self, crs=4326, source=ctx.providers.CartoDB.Voyager, **kwargs
     ):
         """Add a basemap to Map.
 
@@ -233,7 +173,7 @@ class Mapper:
         ctx.add_basemap(self.ax, crs=crs, source=source, **kwargs)
         return self
 
-    def add_text(self, gdf, column: str, **kwargs):
+    def add_text(self, gdf, column, **kwargs):
         """Add text by row value and geom.centroid.
 
         Texts collected into self.texts can be used for ex-post adjustments,
@@ -253,7 +193,7 @@ class Mapper:
             )
         return self
 
-    def add_title(self, title: str, **kwargs):
+    def add_title(self, title, **kwargs):
         """Add a custom title. Replaces default.
 
         Parameters
@@ -264,7 +204,7 @@ class Mapper:
         self.ax.set_title(title, **kwargs)
         return self
 
-    def add_views_textbox(self, text: str, textsize: int = 15):
+    def add_views_textbox(self, text, textsize=15):
         """Add ViEWS textbox to figure. Logo and url are hardcoded.
 
         Parameters
@@ -277,7 +217,7 @@ class Mapper:
         return self
 
     def save(
-        self, path: str, dpi: int = 200, **kwargs
+        self, path, dpi=200, **kwargs
     ):  # Just some defaults to reduce work.
         """Save Map figure to file.
 
