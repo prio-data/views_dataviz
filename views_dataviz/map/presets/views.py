@@ -40,6 +40,8 @@ class ViewsMap(Mapper):
     vmax: Maximum value of scale.
     tickparams: Dictionary of custom tick parameters, by key-value pairs. For
         example: {0.05: "5%", 0.1: "10%"}.
+    figure: Optional tuple of (fig, size) to use if you want to plot into an
+        already existing fig and ax, rather than making a new one.
     """
 
     def __init__(
@@ -55,6 +57,7 @@ class ViewsMap(Mapper):
         vmin=None,
         vmax=None,
         tickparams=None,
+        figure=None,
     ):
         if isinstance(bbox, str):
             bbox_string = bbox.lower()
@@ -66,7 +69,9 @@ class ViewsMap(Mapper):
                 bbox = BBOX_AFRICA
             if bbox_string == "africa_middle_east":
                 bbox = BBOX_AME
-        super().__init__(width, height, bbox, cmap, frame_on, title)
+        super().__init__(
+            width, height, bbox, cmap, frame_on, title, figure=figure
+        )
         self.label = label
         if scale not in (None, "prob", "logodds", "delta"):
             raise ValueError(
@@ -95,7 +100,14 @@ class ViewsMap(Mapper):
         )
         self.n_textbox = 0
 
-    def add_layer(self, gdf, cmap=None, inform_colorbar=False, **kwargs):
+    def add_layer(
+        self,
+        gdf,
+        cmap=None,
+        inform_colorbar=False,
+        suppress_textbox=False,
+        **kwargs,
+    ):
         """Add a geopandas plot to a new layer.
 
         Overrides method in parent, adding the default views textbox
@@ -107,24 +119,30 @@ class ViewsMap(Mapper):
         cmap: Optional matplotlib colormap object or string reference
             (e.g. "viridis").
         inform_colorbar: Set or overwrite colorbar with the current layer.
+            Not applicable when `color` is supplied in the kwargs.
+        suppress_textbox: Bool indicating whether to suppress the drawing of
+            a views-textbox.
         **kwargs: Geopandas `.plot` keyword arguments.
         """
-        colormap = self.cmap if cmap is None else cmap
-        # If inform_colorbar, replace cax if exists and set with vmin, vmax.
-        if inform_colorbar and "column" in kwargs:
-            if hasattr(self, "cax"):
-                self.cax.remove()
-            if "vmin" not in kwargs:
-                self.vmin = gdf[kwargs["column"]].min()
-            else:
-                self.vmin = kwargs["vmin"]
-            if "vmax" not in kwargs:
-                self.vmax = gdf[kwargs["column"]].max()
-            else:
-                self.vmax = kwargs["vmax"]
-            Mapper.add_colorbar(self, colormap, self.vmin, self.vmax)
+        if "color" in kwargs:
+            colormap = None
+        else:
+            colormap = self.cmap if cmap is None else cmap
+            # If inform_colorbar, replace cax if exists and set with vmin vmax.
+            if inform_colorbar and "column" in kwargs:
+                if hasattr(self, "cax"):
+                    self.cax.remove()
+                if "vmin" not in kwargs:
+                    self.vmin = gdf[kwargs["column"]].min()
+                else:
+                    self.vmin = kwargs["vmin"]
+                if "vmax" not in kwargs:
+                    self.vmax = gdf[kwargs["column"]].max()
+                else:
+                    self.vmax = kwargs["vmax"]
+                Mapper.add_colorbar(self, colormap, self.vmin, self.vmax)
         self.ax = gdf.plot(ax=self.ax, cmap=colormap, **kwargs)
-        if self.n_textbox == 0:
+        if self.n_textbox == 0 and not suppress_textbox:
             Mapper.add_views_textbox(self, text=self.label, textsize=16)
             self.n_textbox += 1
         return self
