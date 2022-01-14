@@ -5,3 +5,4 @@ from .error import ContinuousCriticismPlot, ContinuousCriticismMap
 from .continuum import plot_continuum
 from .line import Line
 from .pcoord import plot_parallel_coordinates
+from .ablation import plot_ablation
