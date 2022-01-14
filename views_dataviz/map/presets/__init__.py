@@ -1,1 +1,1 @@
-from .views import ViewsAfrica
+from .views import ViewsMap
