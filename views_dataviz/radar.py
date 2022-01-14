@@ -1,6 +1,6 @@
 """Radar plots."""
 
-from typing import Optional, Union, Tuple, List
+from typing import Optional, Union, Tuple, List, Any
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -29,6 +29,7 @@ def plot_radar(
     linestyle: Union[str, List[str]] = "solid",
     marker: Union[str, List[str]] = None,
     alpha: Union[float, List[float]] = 1,
+    ax: Any = None,
     path: Optional[str] = None,
 ):
     """Plots a radar chart.
@@ -53,16 +54,19 @@ def plot_radar(
             to each enumerated entry: cmap(i).
         colors: Optional list of colors. Overrides cmap. Example:
             ["#808080", "blue"]
-        fill: Bool indicating whether to fill the polygons plotted.
+        fill: Bool indicating whether to fill the polygons plotted, or a list
+            of bools indicating whether to fill per entry.
         linewidth: A single float for the width of lines plotted, or a list
             containing the widths to apply per entry.
         linestyle: A single string linestyle to apply to the lines plotted, or
             a list containing the linestyles to apply per entry.
         marker: Optional markerstyle or list of markerstyles for each entry.
         alpha: Alpha of fill.
+        ax: Optional existing ax to plot figure into.
         path: Optional. Writes to path if set.
     """
-    _, ax = plt.subplots(figsize=figsize, subplot_kw=dict(polar=True))
+    if ax is None:
+        _, ax = plt.subplots(figsize=figsize, subplot_kw=dict(polar=True))
     nodes = len(df[categories])
 
     # Determine the angle of each axis in the plot.
@@ -79,12 +83,12 @@ def plot_radar(
 
     # Go through labels and adjust alignment based on angle.
     for label, angle in zip(ax.get_xticklabels(), angles):
-      if angle in (0, np.pi):
-        label.set_horizontalalignment('center')
-      elif 0 < angle < np.pi:
-        label.set_horizontalalignment('left')
-      else:
-        label.set_horizontalalignment('right')
+        if angle in (0, np.pi):
+            label.set_horizontalalignment('center')
+        elif 0 < angle < np.pi:
+            label.set_horizontalalignment('left')
+        else:
+            label.set_horizontalalignment('right')
 
     # Adjust yticks and ylims.
     plt.yticks(
@@ -125,6 +129,9 @@ def plot_radar(
         style[col]["marker"] = (
             marker[i] if isinstance(marker, list) else marker
         )
+        style[col]["fill"] = (
+            fill[i] if isinstance(fill, list) else fill
+        )
 
     # Plot.
     for col in radardata:
@@ -139,7 +146,7 @@ def plot_radar(
             label=col,
             zorder=-1,
         )
-        if fill:
+        if style[col]["fill"]:
             ax.fill(
                 angles, radardata[col], color=style[col]["color"], alpha=0.1
             )
