@@ -3,3 +3,4 @@ from .dumbbell import plot_dumbbell
 from .map import mapper
 from .error import ContinuousCriticismPlot, ContinuousCriticismMap
 from .continuum import plot_continuum
+from .spl_extensions import ModelCriticismMap
