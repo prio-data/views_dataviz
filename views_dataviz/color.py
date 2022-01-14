@@ -1,8 +1,17 @@
 from typing import Any, Optional
 import numpy as np
+import colorsys
 from matplotlib import colors
 import matplotlib.pyplot as plt
 from matplotlib.colors import Colormap
+
+
+def get_rgb_from_continuum(value):
+    """Gets rgb value from 0-100 set range"""
+    rgb = colorsys.hsv_to_rgb(value / 150.0, 1.0, 1.0)
+    rgb = tuple([round(255 * x) for x in rgb])
+    rgb = "#%02x%02x%02x" % rgb
+    return rgb
 
 
 def shift_colormap(
