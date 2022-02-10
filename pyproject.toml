@@ -4,8 +4,8 @@ version = "0.9.0"
 description = ""
 authors = [
    "peder2911 <pglandsverk@gmail.com>",
-   "rbjansen <r.b.jansen.uu@gmail.com",
-   "frehoy <frederick.hoyles@gmail.com"]
+   "rbjansen <r.b.jansen.uu@gmail.com>",
+   "frehoy <frederick.hoyles@gmail.com>"]
 license = "CC-BY-NC"
 
 [tool.poetry.dependencies]
