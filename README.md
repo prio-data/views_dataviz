@@ -1,6 +1,6 @@
 # ViEWS dataviz
 
-<h1 style="color:red;">This is an obsolete package that should not be used in production, will not work with ViEWS3 and should not be used in any production code based on ViEWS3</h1>
+<h1 style="color:red">This is an obsolete package that should not be used in production, will not work with ViEWS3 and should not be used in any production code based on ViEWS3</h1>
 
 This library holds data visualization functions used by the ViEWS team.
 
